@@ -61,7 +61,7 @@ public class LexicalAnalyzer {
     private static final Set<String> BOOLEANS = Set.of("TRUE", "FALSE");
 
     // Основной метод анализа
-    public void analyze(String input) {
+    public void  analyze(String input) {
         tokens.clear();
         errors.clear();
 
@@ -178,7 +178,9 @@ public class LexicalAnalyzer {
             // Обработка операторов и разделителей
             switch (current) {
                 case '|':
-                    tokens.add(new Token(TokenType.PIPE, "|", line, column));
+                    if(!tokens.getLast().equals("|")) {
+                        tokens.add(new Token(TokenType.PIPE, "|", line, column));
+                    }
                     pos++; column++;
                     break;
                 case ':':
