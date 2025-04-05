@@ -154,8 +154,8 @@ public class LexicalAnalyzerTest {
         analyzer.analyze(input);
 
         // Проверяем баланс скобок через счетчик
-        long open = analyzer.getTokens().stream().filter(t -> t.value.equals("(")).count();
-        long close = analyzer.getTokens().stream().filter(t -> t.value.equals(")")).count();
+        long open = analyzer.getTokens().stream().filter(t -> t.name.equals("(")).count();
+        long close = analyzer.getTokens().stream().filter(t -> t.name.equals(")")).count();
         assertEquals(open, close);
     }
 
@@ -194,4 +194,6 @@ public class LexicalAnalyzerTest {
 
         assertFalse(analyzer.getErrors().isEmpty());
     }
+
+
 }

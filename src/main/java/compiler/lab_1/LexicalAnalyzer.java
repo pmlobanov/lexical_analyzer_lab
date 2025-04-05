@@ -15,31 +15,33 @@ public class LexicalAnalyzer {
     // Класс для хранения информации о токене
     public static class Token {
         public final TokenType type;
-        public final String value;
+        public final String name;
+        public final int value;
         public final int line;
         public final int column;
-        private Token other;
+       // private Token other;
 
-        public Token(TokenType type, String value, int line, int column) {
+        public Token(TokenType type, String name, int line, int column, int value) {
             this.type = type;
-            this.value = value;
+            this.name = name;
             this.line = line;
             this.column = column;
+            this.value = value;
         }
 
         @Override
         public String toString() {
-            return String.format("%-12s %-10s at line %d, column %d",
-                    type, "'" + value + "'", line, column);
+            return String.format("%-12s %-10s %s",
+                    type, "'" + name + "'", (value == -1 ? " " : value == 0 ? name : name +": " + value));
         }
 
         public boolean equals (Token other) {
            return this.type.equals(other.type) && this.column == other.column && this.line == other.line &&
-                   this.value.equals(other.value);
+                   this.name.equals(other.name);
         }
 
         public boolean equals (String otherValue) {
-            return  this.value.equals(otherValue);
+            return  this.name.equals(otherValue);
         }
 
     }
@@ -60,6 +62,7 @@ public class LexicalAnalyzer {
     private static final Set<String> OPERATORS = Set.of("OR", "XOR", "AND", "NOT");
     private static final Set<String> BOOLEANS = Set.of("TRUE", "FALSE");
 
+
     // Основной метод анализа
     public void  analyze(String input) {
         tokens.clear();
@@ -68,6 +71,7 @@ public class LexicalAnalyzer {
         int line = 1;
         int column = 1;
         int pos = 0;
+        int counter  =1;
         boolean flagOfBracket = false;
         int bracketsCounter = 0;
         int inputLength = input.length();
@@ -153,9 +157,9 @@ public class LexicalAnalyzer {
                 // Определение типа токена
                 String upperWord = word.toUpperCase();
                 if (BOOLEANS.contains(upperWord)) {
-                    tokens.add(new Token(TokenType.BOOLEAN, upperWord, line, startColumn));
+                    tokens.add(new Token(TokenType.BOOLEAN, upperWord, line, startColumn, 0));
                 } else if (OPERATORS.contains(upperWord)) {
-                    tokens.add(new Token(TokenType.OPERATOR, upperWord, line, startColumn));
+                    tokens.add(new Token(TokenType.OPERATOR, upperWord, line, startColumn, -1));
                 } else {
                     if(!tokens.isEmpty()){
                         if(tokens.getLast().type.equals(TokenType.ASSIGN)){
@@ -166,11 +170,15 @@ public class LexicalAnalyzer {
                             }
                         }
                     }
-                    tokens.add(new Token(TokenType.IDENTIFIER, word, line, startColumn));
+                    String finalWord = word;
+                    var valueOfToken = tokens.stream().filter(
+                            token -> token.type == TokenType.IDENTIFIER && token.name.equals(finalWord)
+                    ).findFirst();
+                    tokens.add(new Token(TokenType.IDENTIFIER, word, line, startColumn, valueOfToken.isPresent()?valueOfToken.get().value : counter++));
                 }
                 if(flagOfBracket){
                     flagOfBracket = false;
-                    tokens.add(new Token(TokenType.RPAREN, ")", line, column));
+                    tokens.add(new Token(TokenType.RPAREN, ")", line, column, -1));
                 }
                 continue;
             }
@@ -179,39 +187,45 @@ public class LexicalAnalyzer {
             switch (current) {
                 case '|':
                     if(!tokens.getLast().equals("|")) {
-                        tokens.add(new Token(TokenType.PIPE, "|", line, column));
+                        tokens.add(new Token(TokenType.PIPE, "|", line, column, -1));
                     }
                     pos++; column++;
                     break;
                 case ':':
                     if (pos + 1 < inputLength && input.charAt(pos + 1) == '=') {
-                        tokens.add(new Token(TokenType.ASSIGN, ":=", line, column));
+                        tokens.add(new Token(TokenType.ASSIGN, ":=", line, column, -1));
                         pos += 2; column += 2;
                     } else {
                         errors.add(String.format("Invalid token ':' at line %d, column %d", line, column));
-                        tokens.add(new Token(TokenType.ERROR, ":", line, column));
+                        tokens.add(new Token(TokenType.ERROR, ":", line, column, -1));
                         pos++; column++;
                     }
                     break;
                 case '(':
-                    tokens.add(new Token(TokenType.LPAREN, "(", line, column));
+                    tokens.add(new Token(TokenType.LPAREN, "(", line, column, -1));
                     pos++; column++; bracketsCounter++;
                     break;
                 case ')':
-                    tokens.add(new Token(TokenType.RPAREN, ")", line, column));
+                    tokens.add(new Token(TokenType.RPAREN, ")", line, column, -1));
                     pos++; column++; bracketsCounter--;
                     break;
                 default:
                     errors.add(String.format("Unexpected character '%c' at line %d, column %d",
                             current, line, column));
-                    tokens.add(new Token(TokenType.ERROR, String.valueOf(current), line, column));
+                    //tokens.add(new Token(TokenType.ERROR, String.valueOf(current), line, column, ni;));
                     pos++; column++;
             }
         }
     }
+    private Object getValue(String name){
+        return switch (name){
+            case ("TRUE"),("FALSE") ->  Boolean.parseBoolean(name);
+            default -> null;
+        };
+    }
     private boolean identifierExists(String identifier) {
         return tokens.stream()
-                .anyMatch(token -> token.type == TokenType.IDENTIFIER && token.value.equals(identifier));
+                .anyMatch(token -> token.type == TokenType.IDENTIFIER && token.name.equals(identifier));
     }
 
     // Методы для получения результатов
@@ -232,7 +246,7 @@ public class LexicalAnalyzer {
         }
 
         System.out.println("=== Tokens Table ===");
-        System.out.printf("%-12s %-10s %s\n", "TYPE", "VALUE", "POSITION");
+        System.out.printf("%-12s %-10s %s\n", "TYPE", "NAME",  "VALUE");
         for (Token token : tokens) {
             System.out.println(token);
         }
@@ -251,7 +265,17 @@ public class LexicalAnalyzer {
             "/* This is a comment */ x := TRUE /* Another comment */ | y := FALSE",
 
             // Комплексное выражение
-            "a := (TRUE AND FALSE) XOR (NOT TRUE) | b := a OR FALSE"
+            "a := (TRUE AND FALSE) XOR (NOT TRUE) | b := a OROR FALSE",
+
+            // c незакрытым комментарием
+            "x := TRUE /* Unclosed comment",
+
+            /* Пример многострочной программы на тестовом языке */
+            """
+            vara := TRUE | varb := FALSE |
+            result := (vara OR varb) AND
+            (NOT vara XOR varb) | 
+            """
     };
 
     public static void main(String[] args) {
