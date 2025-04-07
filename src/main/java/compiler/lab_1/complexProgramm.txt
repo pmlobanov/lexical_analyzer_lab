@@ -1,0 +1,1 @@
+a := (TRUE AND FALSE) XOR (NOT TRUE) | b := a OROR FALSE

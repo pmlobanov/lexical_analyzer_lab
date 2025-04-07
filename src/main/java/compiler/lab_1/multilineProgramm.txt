@@ -1,0 +1,3 @@
+vara := TRUE | varb := FALSE |
+result := (vara OR varb) AND
+(NOT vara XOR varb) |

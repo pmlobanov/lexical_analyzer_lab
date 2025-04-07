@@ -1,10 +1,15 @@
 package compiler.lab_1;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class LexicalAnalyzer {
     // Типы токенов
@@ -253,6 +258,21 @@ public class LexicalAnalyzer {
 
     }
 
+    //считываем из файла
+    public static String readProgramFromFile(String filePath) throws IOException {
+        return Files.lines(Paths.get(filePath))
+                .map(line -> {
+                    // Удаляем однострочные комментарии (// ...)
+                    int commentIndex = line.indexOf("//");
+                    if (commentIndex >= 0) {
+                        line = line.substring(0, commentIndex);
+                    }
+                    return line.trim();
+                })
+                .filter(line -> !line.isEmpty()) // Игнорируем пустые строки
+                .collect(Collectors.joining(" ")); // Объединяем с пробелами
+    }
+
     // Примеры программ на входном языке
     public static final String[] TEST_PROGRAMS = {
             // Правильная программа
@@ -278,16 +298,36 @@ public class LexicalAnalyzer {
             """
     };
 
+    public static final String[] TEST_FILEPATHS ={
+        "C:\\Users\\LOBAN\\Desktop\\Политех\\ТА\\semester_2\\lexical_analyzer_lab\\src\\main\\java\\compiler\\lab_1\\commentProgramm.txt",
+        "C:\\Users\\LOBAN\\Desktop\\Политех\\ТА\\semester_2\\lexical_analyzer_lab\\src\\main\\java\\compiler\\lab_1\\complexProgramm.txt",
+        "C:\\Users\\LOBAN\\Desktop\\Политех\\ТА\\semester_2\\lexical_analyzer_lab\\src\\main\\java\\compiler\\lab_1\\correctProgramm.txt",
+        "C:\\Users\\LOBAN\\Desktop\\Политех\\ТА\\semester_2\\lexical_analyzer_lab\\src\\main\\java\\compiler\\lab_1\\incorrectProgramm.txt",
+        "C:\\Users\\LOBAN\\Desktop\\Политех\\ТА\\semester_2\\lexical_analyzer_lab\\src\\main\\java\\compiler\\lab_1\\multilineProgramm.txt",
+        "C:\\Users\\LOBAN\\Desktop\\Политех\\ТА\\semester_2\\lexical_analyzer_lab\\src\\main\\java\\compiler\\lab_1\\unclosedCommentProgramm.txt"
+    };
+
     public static void main(String[] args) {
         LexicalAnalyzer analyzer = new LexicalAnalyzer();
 
-        for (int i = 0; i < TEST_PROGRAMS.length; i++) {
-            System.out.printf("\n=== Test Program %d ===\n", i + 1);
-            System.out.println(TEST_PROGRAMS[i]);
-            System.out.println("\nAnalysis results:");
+        try {
+            for (var programm : TEST_FILEPATHS){
+                // Читаем программу из файла
+                String program = readProgramFromFile(programm);
 
-            analyzer.analyze(TEST_PROGRAMS[i]);
-            analyzer.printResults();
+                System.out.println("=== Source Program ===");
+                System.out.println(program);
+                System.out.println("\nAnalysis results:");
+
+                // Анализируем программу
+                analyzer.analyze(program);
+                analyzer.printResults();
+
+
+            }
+
+        } catch (IOException e) {
+            System.err.println("Failed to read file: " + e.getMessage());
         }
     }
 }

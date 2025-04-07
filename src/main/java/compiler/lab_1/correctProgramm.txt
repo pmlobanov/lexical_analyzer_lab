@@ -1,0 +1,1 @@
+x := TRUE | y := FALSE | z := x OR y

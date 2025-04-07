@@ -1,0 +1,1 @@
+var_with_very_long_name := TRUE | x := 123 | y := TRUEE
