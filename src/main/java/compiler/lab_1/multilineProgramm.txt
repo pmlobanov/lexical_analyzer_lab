@@ -1,3 +1,3 @@
-vara := TRUE | varb := FALSE |
-result := (vara OR varb) AND
-(NOT vara XOR varb) |
+vara ::= TRUE | varb := FALSE |
+result :== (2vara OR varb)) AND
+(NOT vara XOR1 varb) |

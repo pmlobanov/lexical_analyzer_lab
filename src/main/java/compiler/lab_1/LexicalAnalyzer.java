@@ -128,7 +128,7 @@ public class LexicalAnalyzer {
             }
 
             // Обработка идентификаторов и ключевых слов
-            if (Character.isLetter(current)) {
+            if (Character.isLetterOrDigit(current)) {
                 StringBuilder sb = new StringBuilder();
                 int startColumn = column;
 
@@ -166,15 +166,15 @@ public class LexicalAnalyzer {
                 } else if (OPERATORS.contains(upperWord)) {
                     tokens.add(new Token(TokenType.OPERATOR, upperWord, line, startColumn, -1));
                 } else {
-                    if(!tokens.isEmpty()){
-                        if(tokens.getLast().type.equals(TokenType.ASSIGN)){
-                            if(!identifierExists(word)){
-                                errors.add(String.format("Unexpected identifier '%s' at line %d, column %d",
-                                        word, line, column));
-                                continue;
-                            }
-                        }
-                    }
+//                    if(!tokens.isEmpty()){
+//                        if(tokens.getLast().type.equals(TokenType.ASSIGN)){
+//                            if(!identifierExists(word)){
+//                                errors.add(String.format("Unexpected identifier '%s' at line %d, column %d",
+//                                        word, line, column));
+//                                continue;
+//                            }
+//                        }
+//                    }
                     String finalWord = word;
                     var valueOfToken = tokens.stream().filter(
                             token -> token.type == TokenType.IDENTIFIER && token.name.equals(finalWord)
@@ -202,7 +202,7 @@ public class LexicalAnalyzer {
                         pos += 2; column += 2;
                     } else {
                         errors.add(String.format("Invalid token ':' at line %d, column %d", line, column));
-                        tokens.add(new Token(TokenType.ERROR, ":", line, column, -1));
+                        //tokens.add(new Token(TokenType.ERROR, ":", line, column, -1));
                         pos++; column++;
                     }
                     break;
@@ -260,16 +260,7 @@ public class LexicalAnalyzer {
 
     //считываем из файла
     public static String readProgramFromFile(String filePath) throws IOException {
-        return Files.lines(Paths.get(filePath))
-                .map(line -> {
-                    // Удаляем однострочные комментарии (// ...)
-                    int commentIndex = line.indexOf("//");
-                    if (commentIndex >= 0) {
-                        line = line.substring(0, commentIndex);
-                    }
-                    return line.trim();
-                })
-                .filter(line -> !line.isEmpty()) // Игнорируем пустые строки
+        return Files.lines(Paths.get(filePath)).filter(line -> !line.isEmpty()) // Игнорируем пустые строки
                 .collect(Collectors.joining(" ")); // Объединяем с пробелами
     }
 
@@ -315,7 +306,7 @@ public class LexicalAnalyzer {
                 // Читаем программу из файла
                 String program = readProgramFromFile(programm);
 
-                System.out.println("=== Source Program ===");
+                System.out.println("\n=== Source Program ===");
                 System.out.println(program);
                 System.out.println("\nAnalysis results:");
 
